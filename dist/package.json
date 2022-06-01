@@ -4,8 +4,13 @@
   "description": "Solana Support Library",
   "author": "T-Force Xyz",
   "license": "Apache-2.0",
-  "scripts": {
-    "build": "tsc --build"
+  "main": "index.js",
+  "types": "index.d.ts",
+  "exports": {
+    ".": "./index.js",
+    "./core": "./core/index.js",
+    "./config": "./config/index.js",
+    "./helpers": "./helpers/index.js"
   },
   "repository": {
     "type": "git",

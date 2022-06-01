@@ -1,6 +1,6 @@
 import { Keypair } from '@solana/web3.js';
 import path from 'path';
-import { FileSystemService } from './core';
+import { FileSystemService } from '../core/file_system.service';
 import { SolanaConfigService } from './solana_config.service';
 
 export class TestAccountService {

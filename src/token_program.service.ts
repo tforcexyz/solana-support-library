@@ -1,7 +1,15 @@
-import { Connection, Keypair, PublicKey, sendAndConfirmTransaction, SystemProgram, Transaction, TransactionInstruction } from '@solana/web3.js'
+import {
+  Connection,
+  Keypair,
+  PublicKey,
+  SystemProgram,
+  Transaction,
+  TransactionInstruction
+} from '@solana/web3.js'
 import BN from 'bn.js'
+import { sendTransaction } from './core/solana_web3.service'
 import { SolanaService } from './solana.service'
-import { ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID, INITIALIZE_ACCOUNT_SPAN, INITIALIZE_MINT_SPAN, TokenAccountInfo, TokenMintInfo, TokenProgramInstructionService, TOKEN_PROGRAM_ID } from './token_program_instruction.service'
+import { INITIALIZE_ACCOUNT_SPAN, INITIALIZE_MINT_SPAN, TokenAccountInfo, TokenMintInfo, TokenProgramInstructionService, TOKEN_PROGRAM_ID } from './token_program_instruction.service'
 
 export class TokenProgramService {
 
@@ -25,7 +33,7 @@ export class TokenProgramService {
     const signers = [
       payerAccount
     ]
-    const txSign = await sendAndConfirmTransaction(connection, transaction, signers)
+    const txSign = await sendTransaction(connection, transaction, signers)
     console.log(`Delegated ${amount} token units to ${delegateAddress.toBase58()}`, '---', txSign, '\n')
     return true
   }
@@ -74,7 +82,7 @@ export class TokenProgramService {
     )
     transaction.add(initializeTokenAccountInstruction)
 
-    const txSign = await sendAndConfirmTransaction(connection, transaction, [
+    const txSign = await sendTransaction(connection, transaction, [
       payerAccount,
       tokenAccount,
     ])
@@ -115,7 +123,7 @@ export class TokenProgramService {
     )
     transaction.add(initializeTokenMintInstruction)
 
-    const txSign = await sendAndConfirmTransaction(connection, transaction, [
+    const txSign = await sendTransaction(connection, transaction, [
       payerAccount,
       tokenMintAccount,
     ])
@@ -173,7 +181,7 @@ export class TokenProgramService {
     )
     transaction.add(disableMintAuthorityInstruction)
 
-    const txSign = await sendAndConfirmTransaction(connection, transaction, [
+    const txSign = await sendTransaction(connection, transaction, [
       payerAccount,
       tokenMintAccount,
     ])
@@ -205,7 +213,7 @@ export class TokenProgramService {
     )
     transaction.add(createATAInstruction)
 
-    const txSign = await sendAndConfirmTransaction(connection, transaction, [
+    const txSign = await sendTransaction(connection, transaction, [
       payerAccount,
     ])
     console.log(`Created Associated Token Account ${tokenAccountAddress.toBase58()} for Account ${ownerAddress.toBase58()}`, '---', txSign, '\n')
@@ -327,7 +335,7 @@ export class TokenProgramService {
     if (instructions.length > 0) {
       const transaction: Transaction = new Transaction()
       transaction.instructions = instructions
-      const txSign = await sendAndConfirmTransaction(connection, transaction, [
+      const txSign = await sendTransaction(connection, transaction, [
         payerAccount,
         userAccount,
       ])
@@ -365,7 +373,7 @@ export class TokenProgramService {
     )
     transaction.add(mintInstruction)
 
-    const txSign = await sendAndConfirmTransaction(connection, transaction, [
+    const txSign = await sendTransaction(connection, transaction, [
       payerAccount
     ])
     console.log(`Minted ${amount} token units to ${recipientTokenAddress.toBase58()}`, '---', txSign, '\n')
@@ -403,7 +411,7 @@ export class TokenProgramService {
     )
     transaction.add(transferTokenInstruction)
 
-    const txSign = await sendAndConfirmTransaction(connection, transaction, [
+    const txSign = await sendTransaction(connection, transaction, [
       payerAccount
     ])
     console.log(`Transferred ${amount} token units from ${payerTokenAddress.toBase58()} to ${recipientTokenAddress.toBase58()}`, '---', txSign, '\n')
@@ -430,7 +438,7 @@ export class TokenProgramService {
       authorityAccount
     ]
 
-    const txSign = await sendAndConfirmTransaction(connection, transaction, signers)
+    const txSign = await sendTransaction(connection, transaction, signers)
     console.log(`Freeze account ${accountAddress.toString()}`, '---', txSign, '\n')
 
     return true
@@ -456,7 +464,7 @@ export class TokenProgramService {
       authorityAccount
     ]
 
-    const txSign = await sendAndConfirmTransaction(connection, transaction, signers)
+    const txSign = await sendTransaction(connection, transaction, signers)
     console.log(`Thaw account ${accountAddress.toString()}`, '---', txSign, '\n')
 
     return true

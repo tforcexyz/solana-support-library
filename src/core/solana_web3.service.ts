@@ -35,8 +35,14 @@ export async function sendTransaction(
       },
     )
   } catch(err) {
-    // TODO: Additional exception handling here, throw err is required
-    console.debug(err)
+    if(err) {
+      const props = []
+      for(const prop in err) {
+        props.push(prop)
+      }
+      console.debug(props)
+    }
+    console.error(err)
     throw err
   }
 }

@@ -1,7 +1,10 @@
-# Intermediate file & folders
-dist
-node_modules
-.npmrc
-package-lock.json
-yarn.lock
-yarn-error.log
+# Solana Anchor program project
+/.DS_Store
+/Cargo.lock
+/dist
+/node_modules
+/package-lock.json
+/programs/*/tests/fixtures
+/target
+/yarn-error.log
+/yarn.lock

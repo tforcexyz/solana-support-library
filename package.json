@@ -1,11 +1,13 @@
 {
   "name": "@tforcexyz/solana-support-library",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Solana Support Library",
   "author": "T-Force Xyz",
   "license": "Apache-2.0",
   "scripts": {
-    "build": "tsc --build"
+    "build:ts": "tsc --build",
+    "build:rs": "anchor build -- --sbf-out-dir ./tests/fixtures",
+    "test:rs": "cargo test-bpf -- --nocapture"
   },
   "repository": {
     "type": "git",

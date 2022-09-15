@@ -1,0 +1,7 @@
+{
+  "name": "Ethereum FX",
+  "symbol": "ETHfx",
+  "description": "Ethereum token on DevNet.",
+  "image": "https://raw.githubusercontent.com/tforcexyz/solana-support-library/a9052b34cd1c239204ee402766daf8c20b4facfe/src/metadata/ethfx.png",
+  "external_url": "https://tforce.xyz"
+}

@@ -3,21 +3,21 @@ import {
   sendAndConfirmTransaction,
   Signer,
   Transaction
-} from '@solana/web3.js'
+} from '@solana/web3.js';
 
 export async function getProgramReturn(
   connection: Connection,
   txHash: string,
 ): Promise<string> {
-  const txInfo = await connection.getTransaction(txHash)
-  const logMessages = txInfo.meta.logMessages
+  const txInfo = await connection.getTransaction(txHash);
+  const logMessages = txInfo.meta.logMessages;
   for(const message of logMessages) {
     if(message.startsWith('Program return: ')) {
-      const base64Value = message.slice(61)
-      return Buffer.from(base64Value, 'base64').toString('hex')
+      const base64Value = message.slice(61);
+      return Buffer.from(base64Value, 'base64').toString('hex');
     }
   }
-  return null
+  return null;
 }
 
 export async function sendTransaction(
@@ -26,7 +26,7 @@ export async function sendTransaction(
   signers: Signer[],
 ): Promise<string> {
   try {
-    return sendAndConfirmTransaction(
+    const txSign = await sendAndConfirmTransaction(
       connection,
       transaction,
       signers,
@@ -34,15 +34,16 @@ export async function sendTransaction(
         skipPreflight: true,
       },
     )
+    return txSign;
   } catch(err) {
     if(err) {
-      const props = []
+      const props = [];
       for(const prop in err) {
-        props.push(prop)
+        props.push(prop);
       }
-      console.debug(props)
+      console.debug(props);
     }
-    console.error(err)
-    throw err
+    console.error(err);
+    throw err;
   }
 }

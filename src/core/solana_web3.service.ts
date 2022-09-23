@@ -1,9 +1,9 @@
 import {
   Connection,
-  sendAndConfirmTransaction,
   Signer,
   Transaction
 } from '@solana/web3.js';
+import { SignatureTuple } from './interfaces';
 
 export async function getProgramReturn(
   connection: Connection,
@@ -20,14 +20,42 @@ export async function getProgramReturn(
   return null;
 }
 
+export async function sendRawTransaction(
+  connection: Connection,
+  rawTransaction: Buffer,
+  signatures: SignatureTuple[],
+): Promise<string> {
+
+  const transaction = Transaction.from(rawTransaction);
+  for(let signature of signatures) {
+    transaction.addSignature(signature.publicKey, signature.signature);
+  }
+
+  try {
+    return await connection.sendRawTransaction(
+      transaction.serialize(),
+      {
+        skipPreflight: true,
+      },
+    );
+  }
+  catch(err) {
+    if(err) {
+      console.debug(JSON.stringify(err));
+    }
+    console.error(err);
+    throw err;
+  }
+}
+
 export async function sendTransaction(
   connection: Connection,
   transaction: Transaction,
   signers: Signer[],
 ): Promise<string> {
+
   try {
-    const txSign = await sendAndConfirmTransaction(
-      connection,
+    const txSign = await connection.sendTransaction(
       transaction,
       signers,
       {
@@ -35,13 +63,10 @@ export async function sendTransaction(
       },
     )
     return txSign;
-  } catch(err) {
+  }
+  catch(err) {
     if(err) {
-      const props = [];
-      for(const prop in err) {
-        props.push(prop);
-      }
-      console.debug(props);
+      console.debug(JSON.stringify(err));
     }
     console.error(err);
     throw err;

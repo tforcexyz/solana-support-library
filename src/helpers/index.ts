@@ -1,1 +1,1 @@
-export { NumericHelper, StringHelper } from './primity_helpers'
+export { NumericHelper, StringHelper } from './primity_helpers';

@@ -5,7 +5,7 @@ import {
   SystemProgram,
   Transaction
 } from '@solana/web3.js';
-import { sendTransaction } from './core/solana_web3.service';
+import { executeTransaction } from './core/solana_web3.service';
 
 export class SystemProgramService {
   static async transfer(
@@ -14,17 +14,20 @@ export class SystemProgramService {
     recipientAddress: PublicKey,
     amount: number,
   ): Promise<boolean> {
-    const transaction: Transaction = new Transaction()
+
+    const transaction: Transaction = new Transaction();
+
     transaction.add(SystemProgram.transfer({
       fromPubkey: payerAccount.publicKey,
       toPubkey: recipientAddress,
       lamports: amount,
-    }))
+    }));
+
     const signers = [
       payerAccount
-    ]
-    const txSign = await sendTransaction(connection, transaction, signers)
-    console.log(`Transferred ${amount} lamports from ${payerAccount.publicKey.toBase58()} to ${recipientAddress.toBase58()}`, '---', txSign, '\n')
-    return true
+    ];
+    const txSign = await executeTransaction(connection, transaction, signers);
+    console.log(`Transferred ${amount} lamports from ${payerAccount.publicKey.toBase58()} to ${recipientAddress.toBase58()}`, '---', txSign, '\n');
+    return true;
   }
 }

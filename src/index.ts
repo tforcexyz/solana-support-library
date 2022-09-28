@@ -4,7 +4,7 @@ export { Ed25519SignService } from './core/ed25519_sign.service';
 export { HashService } from './core/hash.service';
 export { SignatureTuple } from './core/interfaces';
 export { MerkleNode, MerkleTree } from './core/merkle_tree';
-export { getProgramReturn, sendRawTransaction, sendTransaction } from './core/solana_web3.service';
+export { executeRawTransaction, executeTransaction, getProgramReturn } from './core/solana_web3.service';
 export { Ed25519InstructionService } from './ed25519_instruction.service';
 export { NumericHelper, StringHelper } from './helpers/primity_helpers';
 export { SolanaService } from './solana.service';

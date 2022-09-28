@@ -1,5 +1,7 @@
 import {
   Connection,
+  sendAndConfirmRawTransaction,
+  sendAndConfirmTransaction,
   Signer,
   Transaction
 } from '@solana/web3.js';
@@ -20,7 +22,7 @@ export async function getProgramReturn(
   return null;
 }
 
-export async function sendRawTransaction(
+export async function executeRawTransaction(
   connection: Connection,
   rawTransaction: Buffer,
   signatures: SignatureTuple[],
@@ -32,7 +34,8 @@ export async function sendRawTransaction(
   }
 
   try {
-    return await connection.sendRawTransaction(
+    return await sendAndConfirmRawTransaction(
+      connection,
       transaction.serialize(),
       {
         skipPreflight: true,
@@ -48,20 +51,21 @@ export async function sendRawTransaction(
   }
 }
 
-export async function sendTransaction(
+export async function executeTransaction(
   connection: Connection,
   transaction: Transaction,
   signers: Signer[],
 ): Promise<string> {
 
   try {
-    const txSign = await connection.sendTransaction(
+    const txSign = await sendAndConfirmTransaction(
+      connection,
       transaction,
       signers,
       {
         skipPreflight: true,
       },
-    )
+    );
     return txSign;
   }
   catch(err) {

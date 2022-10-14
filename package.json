@@ -28,6 +28,7 @@
     "yaml": "^2.1.0"
   },
   "devDependencies": {
+    "@types/bn.js": "^5.1.1",
     "@types/chai": "^4.3.3",
     "@types/crypto-js": "^4.1.1",
     "@types/keccak": "^3.0.1",

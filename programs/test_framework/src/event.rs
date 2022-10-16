@@ -7,3 +7,10 @@ pub struct AnnouncedEvent {
   pub timestamp: i64,
   pub slot: u64,
 }
+
+#[event]
+pub struct MathCalculatonEvent {
+  pub first_number: u16,
+  pub second_number: u16,
+  pub result: u16,
+}

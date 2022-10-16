@@ -8,3 +8,6 @@ pub struct AnnounceContext<'info> {
 
 #[derive(Accounts)]
 pub struct ForwardContext {}
+
+#[derive(Accounts)]
+pub struct MultiplyContext {}

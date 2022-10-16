@@ -1,4 +1,5 @@
 pub mod context;
+pub mod error;
 pub mod event;
 
 use anchor_lang::prelude::*;
@@ -8,6 +9,9 @@ use solana_program::{
   },
 };
 use context::*;
+use error::{
+  ErrorCode,
+};
 use event::*;
 
 declare_id!("TFXeSSo3gA2uXnZfwtHNodvAQnkMMdkZ1soXPqjXaem");
@@ -20,6 +24,8 @@ mod tfx_test_framework {
     ctx: Context<AnnounceContext>,
     content: Vec<u8>,
   ) -> Result<()> {
+
+    require!(content.len() <= 64, ErrorCode::ContentTooLong);
 
     let sender = &ctx.accounts.sender;
     let clock = Clock::get().unwrap();
@@ -64,6 +70,24 @@ mod tfx_test_framework {
 
     solana_program::program::invoke(&instruction, &account_infos[..])
       .expect("CPI call failed");
+
+    Ok(())
+  }
+
+  pub fn multiply(
+    _ctx: Context<MultiplyContext>,
+    first_number: u16,
+    second_number: u16,
+  ) -> Result<()> {
+
+    let result = first_number.checked_mul(second_number)
+      .expect("Integer overflow");
+
+    emit!(MathCalculatonEvent {
+      first_number,
+      second_number,
+      result,
+    });
 
     Ok(())
   }

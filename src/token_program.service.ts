@@ -7,8 +7,8 @@ import {
   TransactionInstruction
 } from '@solana/web3.js'
 import BN from 'bn.js'
+import { SolanaService } from './core/solana.service'
 import { executeTransaction } from './core/solana_web3.service'
-import { SolanaService } from './solana.service'
 import {
   INITIALIZE_ACCOUNT_SPAN,
   INITIALIZE_MINT_SPAN,

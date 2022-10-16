@@ -53,4 +53,24 @@ export class TestProgramInstruction {
       programId: testFrameworkProgramId,
     });
   }
+
+  static multiply(
+    firstNumber: number,
+    secondNumber: number,
+    testFrameworkProgramId: PublicKey,
+  ): TransactionInstruction {
+    const request = {
+      firstNumber,
+      secondNumber,
+    };
+    const data = coder.instruction.encode('multiply', request);
+
+    const keys: AccountMeta[] = [];
+
+    return new TransactionInstruction({
+      data,
+      keys,
+      programId: testFrameworkProgramId,
+    });
+  }
 }

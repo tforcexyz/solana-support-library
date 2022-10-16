@@ -4,4 +4,5 @@ export { Ed25519SignService } from './ed25519_sign.service';
 export { HashService } from './hash.service';
 export { SignatureTuple } from './interfaces';
 export { MerkleNode, MerkleTree } from './merkle_tree';
-export { executeRawTransaction, executeTransaction, getProgramReturn } from './solana_web3.service';
+export { SolanaService } from './solana.service';
+export { executeRawTransaction, executeRawTransaction2, executeTransaction, executeTransaction2, getProgramReturn } from './solana_web3.service';

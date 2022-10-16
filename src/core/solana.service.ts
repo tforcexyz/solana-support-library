@@ -1,21 +1,47 @@
 import {
   Connection,
   Keypair,
-  PublicKey
+  PublicKey,
+  sendAndConfirmTransaction,
+  Signer,
+  Transaction
 } from '@solana/web3.js';
 import BN from 'bn.js';
 import {
   InstructionLog,
-  LogMessageProcessor,
-} from './core/log_message_processor.service';
+  LogMessageProcessor
+} from './log_message_processor.service';
 
 export interface TransactionLog {
   txSignature: string
   instructionLogs: InstructionLog[]
   rawLogMessages: string[]
+  isSuccess: boolean
+  errorCode: string
+  errorMessage: string
 }
 
 export class SolanaService {
+
+  static async executeTransaction(
+    connection: Connection,
+    transaction: Transaction,
+    signers: Signer[],
+  ): Promise<[string, TransactionLog]> {
+
+    try {
+      const txSign = await sendAndConfirmTransaction(
+        connection,
+        transaction,
+        signers,
+      );
+      return [txSign, null];
+    }
+    catch(err) {
+      const txLog = handleRpcError(err);
+      return [null, txLog];
+    }
+  }
 
   static async getAccountBalance(
     connection: Connection,
@@ -41,12 +67,46 @@ export class SolanaService {
       return null;
     }
     const rawLogMessages = transactionResponse.meta.logMessages;
-    const instructionLogs = LogMessageProcessor.processLogs(rawLogMessages);
-    return <TransactionLog>{
-      txSignature,
+    const transactionLog = this.formatLogMessages(rawLogMessages);
+    transactionLog.txSignature = txSignature;
+    return transactionLog;
+  }
+
+  static formatLogMessages(
+    messages: string[]
+  ): TransactionLog {
+    const instructionLogs = LogMessageProcessor.processLogs(messages);
+    let transactionLog = <TransactionLog>{
+      txSignature: null,
       instructionLogs,
-      rawLogMessages,
+      rawLogMessages: messages,
+      isSuccess: true,
+      errorCode: null,
+      errorMessage: null,
     };
+    let traversingInstructions = instructionLogs;
+    let currentInstructionIndex = 0;
+    let currentInstruction = instructionLogs[0];
+    while(currentInstruction != null) {
+      if(currentInstruction.isSuccess) {
+        currentInstructionIndex++;
+      }
+      else {
+        transactionLog.isSuccess = false;
+        transactionLog.errorCode = currentInstruction.errorCode;
+        transactionLog.errorMessage = currentInstruction.errorMessage;
+        traversingInstructions = currentInstruction.children;
+        currentInstructionIndex = 0;
+      }
+      if(currentInstructionIndex < traversingInstructions.length) {
+        currentInstruction = traversingInstructions[currentInstructionIndex];
+      }
+      else {
+        currentInstruction = null;
+      }
+    }
+
+    return transactionLog;
   }
 
   static async generateKeypairFromSeed(fromPublicKey: PublicKey,

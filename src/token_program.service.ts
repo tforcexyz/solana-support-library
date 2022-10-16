@@ -201,14 +201,6 @@ export class TokenProgramService {
     ownerAddress: PublicKey,
     tokenMintAddress: PublicKey,
   ): Promise<PublicKey> {
-    const tokenAccountAddress = this.findAssociatedTokenAddress(
-      ownerAddress,
-      tokenMintAddress,
-    );
-    if (await SolanaService.isAddressInUse(connection, tokenAccountAddress)) {
-      console.log(`SKIPPED: Associated Token Account ${tokenAccountAddress.toBase58()} of Account ${ownerAddress.toBase58()} is already existed`, '\n');
-      return tokenAccountAddress;
-    }
 
     const transaction = new Transaction();
 
@@ -222,8 +214,36 @@ export class TokenProgramService {
     const txSign = await executeTransaction(connection, transaction, [
       payerAccount,
     ]);
+
+    const tokenAccountAddress = this.findAssociatedTokenAddress(
+      ownerAddress,
+      tokenMintAddress,
+    );
     console.log(`Created Associated Token Account ${tokenAccountAddress.toBase58()} for Account ${ownerAddress.toBase58()}`, '---', txSign, '\n');
     return tokenAccountAddress;
+  }
+
+  static async createAssociatedTokenAccountIfNotExists(
+    connection: Connection,
+    payerAccount: Keypair,
+    ownerAddress: PublicKey,
+    tokenMintAddress: PublicKey,
+  ): Promise<PublicKey> {
+    const tokenAccountAddress = this.findAssociatedTokenAddress(
+      ownerAddress,
+      tokenMintAddress,
+    );
+    if (await SolanaService.isAddressInUse(connection, tokenAccountAddress)) {
+      console.log(`SKIPPED: Associated Token Account ${tokenAccountAddress.toBase58()} of Account ${ownerAddress.toBase58()} is already existed`, '\n');
+      return tokenAccountAddress;
+    }
+
+    return this.createAssociatedTokenAccount(
+      connection,
+      payerAccount,
+      ownerAddress,
+      tokenAccountAddress,
+    );
   }
 
   static findAssociatedTokenAddress(
@@ -245,12 +265,12 @@ export class TokenProgramService {
     let recipientTokenAddress: PublicKey = recipientAddress;
     let createATAInstruction: TransactionInstruction = null;
     const recepientType = await this.checkAddressType(connection, recipientAddress);
-    if (recepientType === 1) {
+    if (recepientType === 0 || recepientType === 1) {
       const associatedTokenAccountAddress = this.findAssociatedTokenAddress(
         recipientAddress,
         tokenMintAddress,
       );
-      if (!await SolanaService.isAddressInUse(connection, associatedTokenAccountAddress)) {
+      if (await SolanaService.isAddressAvailable(connection, associatedTokenAccountAddress)) {
         createATAInstruction = TokenProgramInstructionService.createAssociatedTokenAccount(
           payerAddress,
           recipientAddress,

@@ -98,7 +98,7 @@ describe('message_log_processing_test', function() {
     expect(transactionLog.instructionLogs[0].children[0].publicKey.toBase58()).eq(SystemProgram.programId.toBase58());
   });
 
-  it('get_message_log_standard_program_error', async function() {
+  it('get_message_log_standard_program_error_1', async function() {
     const transaction = new Transaction();
     const testAccount0Balance = await SolanaService.getAccountBalance(
       connection,
@@ -119,8 +119,8 @@ describe('message_log_processing_test', function() {
     expect(txLog).is.not.null;
   });
 
-  it('get_message_log_standard_program_error', async function() {
-    const testAccount1UsdcTokenAddress = await TokenProgramService.createAssociatedTokenAccount(
+  it('get_message_log_standard_program_error_2', async function() {
+    const testAccount1UsdcTokenAddress = await TokenProgramService.createAssociatedTokenAccountIfNotExists(
       connection,
       defaultAccount,
       testAccount1.publicKey,

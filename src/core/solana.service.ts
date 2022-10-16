@@ -1,47 +1,13 @@
 import {
   Connection,
   Keypair,
-  PublicKey,
-  sendAndConfirmTransaction,
-  Signer,
-  Transaction
+  PublicKey
 } from '@solana/web3.js';
 import BN from 'bn.js';
-import {
-  InstructionLog,
-  LogMessageProcessor
-} from './log_message_processor.service';
-
-export interface TransactionLog {
-  txSignature: string
-  instructionLogs: InstructionLog[]
-  rawLogMessages: string[]
-  isSuccess: boolean
-  errorCode: string
-  errorMessage: string
-}
+import { TransactionLog } from './interfaces';
+import { LogMessageProcessor } from './log_message_processor.service';
 
 export class SolanaService {
-
-  static async executeTransaction(
-    connection: Connection,
-    transaction: Transaction,
-    signers: Signer[],
-  ): Promise<[string, TransactionLog]> {
-
-    try {
-      const txSign = await sendAndConfirmTransaction(
-        connection,
-        transaction,
-        signers,
-      );
-      return [txSign, null];
-    }
-    catch(err) {
-      const txLog = handleRpcError(err);
-      return [null, txLog];
-    }
-  }
 
   static async getAccountBalance(
     connection: Connection,

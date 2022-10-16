@@ -1,16 +1,16 @@
 import {
   ConfirmOptions,
   Connection,
+  PublicKey,
   sendAndConfirmRawTransaction,
   sendAndConfirmTransaction,
   Signer,
   Transaction
 } from '@solana/web3.js';
-import { SignatureTuple } from './interfaces';
-import {
-  SolanaService,
-  TransactionLog
-} from './solana.service';
+import { SignatureTuple, TransactionLog } from './interfaces';
+import { SolanaService } from './solana.service';
+
+export const DEFAULT_PUBKEY = new PublicKey('11111111111111111111111111111111');
 
 export async function getProgramReturn(
   connection: Connection,
@@ -31,7 +31,8 @@ export async function executeRawTransaction(
   connection: Connection,
   rawTransaction: Buffer,
   signatures: SignatureTuple[],
-): Promise<string> {
+  options?: ConfirmOptions,
+  ): Promise<string> {
 
   const transaction = Transaction.from(rawTransaction);
   for(let signature of signatures) {
@@ -42,6 +43,7 @@ export async function executeRawTransaction(
     return await sendAndConfirmRawTransaction(
       connection,
       transaction.serialize(),
+      options,
     );
   }
   catch(err) {
@@ -93,13 +95,15 @@ export async function executeTransaction(
   connection: Connection,
   transaction: Transaction,
   signers: Signer[],
-): Promise<string> {
+  options?: ConfirmOptions,
+  ): Promise<string> {
 
   try {
     const txSign = await sendAndConfirmTransaction(
       connection,
       transaction,
       signers,
+      options,
     );
     return txSign;
   }

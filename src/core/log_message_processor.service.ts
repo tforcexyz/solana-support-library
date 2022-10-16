@@ -1,32 +1,14 @@
 import { PublicKey } from '@solana/web3.js';
+import {
+  InstructionLog,
+  ProgramLogCategory
+} from './interfaces';
 
 const ANCHOR_PROGRAM_ERROR = 'Program log: AnchorError ';
 const PROGRAM_DATA = 'Program data: ';
 const PROGRAM_ERROR = 'Program log: Error: ';
 const PROGRAM_LOG = 'Program log: ';
-
-export enum ProgramLogCategory {
-  ProgramStart = 1,
-  ProgramSuccess = 2,
-  ProgramFailed = 3,
-  CpiCall = 4,
-  ProgramMessage = 5,
-  ProgramData = 6,
-  ProgramReturn = 7,
-  ProgramError = 8,
-  Others = 0,
-}
-
-export interface InstructionLog {
-  publicKey: PublicKey
-  messages: [ProgramLogCategory, string][]
-  datas: string[]
-  isSuccess: boolean
-  return: string
-  errorCode: string
-  errorMessage: string
-  children: InstructionLog[]
-}
+const PROGRAM_PANIC = 'Program log: panicked at';
 
 export class LogMessageProcessor {
   static processLogs(
@@ -106,10 +88,10 @@ function categorizeLog(
     if(message.startsWith(PROGRAM_ERROR)) {
       return [ProgramLogCategory.ProgramError, `Reason: ${message.slice(PROGRAM_ERROR.length)}`];
     }
-    else if(message.startsWith('Program log: AnchorError')) {
+    else if(message.startsWith(ANCHOR_PROGRAM_ERROR)) {
       return [ProgramLogCategory.ProgramError, `Reason: ${message.slice(PROGRAM_LOG.length)}`];
     }
-    else if(message.startsWith('Program log: panicked at')) {
+    else if(message.startsWith(PROGRAM_PANIC)) {
       return [ProgramLogCategory.ProgramError, `Reason: ${message.slice(PROGRAM_LOG.length)}`];
     }
     else {

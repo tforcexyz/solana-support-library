@@ -2,9 +2,6 @@ use solana_program_test::{
   ProgramTestContext,
 };
 use solana_sdk::{
-  instruction::{
-    Instruction,
-  },
   pubkey::{
     Pubkey,
   },
@@ -12,16 +9,16 @@ use solana_sdk::{
     Keypair,
     Signer,
   },
-  transaction::{
-    Transaction,
-  },
   system_instruction,
   system_program::{
     ID as SYSTEM_PROGRAM_ID,
-  }
+  },
 };
 use spl_token::{
   ID as TOKEN_PROGRAM_ID,
+};
+use crate::framework::context::{
+  process_transaction,
 };
 
 pub async fn airdrop_lamport(
@@ -46,7 +43,6 @@ pub async fn airdrop_lamport(
     .await;
 }
 
-
 pub async fn get_account_type(
   context: &mut ProgramTestContext,
   address: &Pubkey,
@@ -61,7 +57,7 @@ pub async fn get_account_type(
   if account_info.owner == SYSTEM_PROGRAM_ID {
     return 1u8;
   }
-  if account_info.owner ==TOKEN_PROGRAM_ID {
+  if account_info.owner == TOKEN_PROGRAM_ID {
     return 2u8;
   }
 
@@ -75,23 +71,6 @@ pub async fn get_account_balance(
   context.banks_client
     .get_balance(*address)
     .await.unwrap()
-}
-
-pub async fn process_transaction(
-  context: &mut ProgramTestContext,
-  payer: &Keypair,
-  instructions: &[Instruction],
-  signers: &[&Keypair],
-) {
-  let tx = Transaction::new_signed_with_payer(
-    &instructions.to_vec(),
-    Some(&payer.pubkey()),
-    &signers.to_vec(),
-    context.last_blockhash,
-  );
-
-  context.banks_client.process_transaction(tx)
-    .await.unwrap();
 }
 
 pub async fn transfer_lamport(

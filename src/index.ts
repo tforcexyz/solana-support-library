@@ -3,7 +3,7 @@ export { BufferLayoutService } from './core/buffer_layout.service';
 export { Ed25519SignService } from './core/ed25519_sign.service';
 export { HashService } from './core/hash.service';
 export { InstructionLog, ProgramLogCategory, SignatureTuple, TransactionLog } from './core/interfaces';
-export { MerkleNode, MerkleTree } from './core/merkle_tree';
+export { MerkleNode, MerkleTreeKeccak, MerkleTreeSha256 } from './core/merkle_tree';
 export { SolanaService } from './core/solana.service';
 export { DEFAULT_PUBKEY, executeRawTransaction, executeRawTransaction2, executeTransaction, executeTransaction2, getProgramReturn } from './core/solana_web3.service';
 export { Ed25519InstructionService } from './ed25519_instruction.service';

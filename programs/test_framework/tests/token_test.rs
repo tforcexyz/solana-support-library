@@ -12,7 +12,7 @@ use solana_sdk::{
 use crate::framework::{
   account::{
     get_account,
-    get_token_account,
+    get_token_account_named,
     TokenName,
   },
   system::{
@@ -33,7 +33,7 @@ async fn mint_token_test() {
   let mut context = ProgramTest::default().start_with_context().await;
   let default_account = get_account(0);
 
-  let token_mint_account = get_token_account(TokenName::USDT);
+  let token_mint_account = get_token_account_named(TokenName::USDT);
   create_token_mint(&mut context, &token_mint_account, 6, &default_account.pubkey(), None).await;
 
   let account_2 = get_account(2);
@@ -50,7 +50,7 @@ async fn transfer_token_test() {
   let default_account = get_account(0);
   airdrop_lamport(&mut context, &default_account.pubkey(),1_000_000_000).await;
 
-  let token_mint_account = get_token_account(TokenName::USDT);
+  let token_mint_account = get_token_account_named(TokenName::USDT);
   create_token_mint(&mut context, &token_mint_account, 6, &default_account.pubkey(), None).await;
 
   let account_2 = get_account(2);

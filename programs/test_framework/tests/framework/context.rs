@@ -8,6 +8,7 @@ use solana_sdk::{
   },
   instruction::{
     Instruction,
+    InstructionError,
   },
   pubkey::{
     Pubkey,
@@ -18,6 +19,7 @@ use solana_sdk::{
   },
   transaction::{
     Transaction,
+    TransactionError,
   },
   transport::{
     TransportError,
@@ -35,6 +37,22 @@ pub fn assert_transaction_result(
   }
   let error_message = result.unwrap_err().to_string();
   assert!(error_message.contains(&expected_error_message));
+}
+
+pub fn assert_instruction_error(
+  result: Result<(), TransportError>,
+  instruction_index: u8,
+  error_code: u32,
+) {
+  assert!(result.is_err());
+  let error = result.unwrap_err().unwrap();
+  assert_eq!(
+    error,
+    TransactionError::InstructionError(
+      instruction_index,
+      InstructionError::Custom(error_code),
+    ),
+  );
 }
 
 pub async fn create_context(

@@ -2,20 +2,16 @@ pub mod client;
 pub mod framework;
 
 use solana_sdk::{
-  pubkey::{
-    Pubkey,
-  },
   signer::{
     Signer,
   },
 };
-
 use crate::framework::{
   account::{
     get_account,
   },
   context::{
-    assert_transaction_result,
+    assert_instruction_error,
     create_context,
     process_transaction2,
   },
@@ -23,12 +19,15 @@ use crate::framework::{
     airdrop_lamport,
   },
 };
+use test_framework::{
+  ID as PROGRAM_ID,
+};
 
 #[tokio::test]
 async fn announce_test() {
   let mut context = create_context(
     &[
-      ("test_framework", Pubkey::new_from_array([6, 185, 135, 63, 199, 196, 100, 20, 13, 120, 6, 157, 78, 207, 62, 49, 88, 159, 133, 53, 153, 195, 152, 208, 254, 106, 194, 190, 138, 172, 180, 2])),
+      ("test_framework", PROGRAM_ID),
     ],
   ).await;
 
@@ -42,9 +41,9 @@ async fn announce_test() {
 
   let txn_result = process_transaction2(&mut context, &default_account, &[announce_ixn], &[&default_account])
     .await;
-  assert_transaction_result(
+  assert_instruction_error(
     txn_result,
-    false,
-    &"custom program error: 0x1770",
+    0,
+    6000,
   );
 }

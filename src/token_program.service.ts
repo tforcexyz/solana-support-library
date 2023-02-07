@@ -5,10 +5,10 @@ import {
   SystemProgram,
   Transaction,
   TransactionInstruction
-} from '@solana/web3.js'
-import BN from 'bn.js'
-import { SolanaService } from './core/solana.service'
-import { executeTransaction } from './core/solana_web3.service'
+} from '@solana/web3.js';
+import BN from 'bn.js';
+import { SolanaService } from './core/solana.service';
+import { distinctSigners, executeTransaction } from './core/solana_web3.service';
 import {
   INITIALIZE_ACCOUNT_SPAN,
   INITIALIZE_MINT_SPAN,
@@ -16,30 +16,35 @@ import {
   TokenMintInfo,
   TokenProgramInstructionService,
   TOKEN_PROGRAM_ID
-} from './token_program_instruction.service'
+} from './token_program_instruction.service';
 
 export class TokenProgramService {
 
   static async approve(
     connection: Connection,
     payerAccount: Keypair,
-    payerTokenAddress: PublicKey,
+    ownerAccount: Keypair,
+    userTokenAddress: PublicKey,
     delegateAddress: PublicKey,
     amount: BN,
   ): Promise<boolean> {
     const transaction = new Transaction();
 
     const approveInstruction = TokenProgramInstructionService.approve(
-      payerAccount.publicKey,
-      payerTokenAddress,
+      ownerAccount.publicKey,
+      userTokenAddress,
       delegateAddress,
       amount,
     );
     transaction.add(approveInstruction);
 
-    const txSign = await executeTransaction(connection, transaction, [
-      payerAccount
+    transaction.feePayer = payerAccount.publicKey;
+    const signers = distinctSigners([
+      payerAccount,
+      ownerAccount,
     ]);
+
+    const txSign = await executeTransaction(connection, transaction, signers);
     console.log(`Delegated ${amount} token units to ${delegateAddress.toBase58()}`, '---', txSign, '\n');
     return true;
   }
@@ -61,15 +66,44 @@ export class TokenProgramService {
     return 255;
   }
 
+  static async changeAuthority(
+    connection: Connection,
+    payerAccount: Keypair,
+    authrorityAccount: Keypair,
+    mintAddress: PublicKey,
+    authorityType: number,
+    newAuthorityAddress: PublicKey | null,
+  ): Promise<boolean> {
+    const transaction = new Transaction();
+
+    const changeAuthorityInstruction = TokenProgramInstructionService.changeAuthority(
+      authrorityAccount.publicKey,
+      mintAddress,
+      authorityType,
+      newAuthorityAddress,
+    );
+    transaction.add(changeAuthorityInstruction);
+
+    const signers = distinctSigners([
+      payerAccount,
+      authrorityAccount,
+    ]);
+    transaction.feePayer = payerAccount.publicKey;
+
+    const txSign = await executeTransaction(connection, transaction, signers);
+    console.info(`Changed authority of ${mintAddress.toBase58()} to ${newAuthorityAddress ? newAuthorityAddress.toBase58() : 'NULL' }`, '---', txSign, '\n');
+
+    return true;
+  }
+
   static async createTokenAccount(
     connection: Connection,
     payerAccount: Keypair,
-    userAddress: PublicKey,
+    tokenAccount: Keypair,
+    ownerAddress: PublicKey,
     tokenMintAddress: PublicKey,
   ): Promise<Keypair> {
     const transaction = new Transaction();
-
-    const tokenAccount = Keypair.generate();
 
     const lamportsToInitializeAccount = await connection.getMinimumBalanceForRentExemption(INITIALIZE_ACCOUNT_SPAN);
     const createAccountInstruction = SystemProgram.createAccount({
@@ -82,16 +116,19 @@ export class TokenProgramService {
     transaction.add(createAccountInstruction);
 
     const initializeTokenAccountInstruction = TokenProgramInstructionService.initializeAccount(
-      userAddress,
+      ownerAddress,
       tokenMintAddress,
       tokenAccount.publicKey,
     );
     transaction.add(initializeTokenAccountInstruction);
 
-    const txSign = await executeTransaction(connection, transaction, [
+    transaction.feePayer = payerAccount.publicKey;
+    const signers = [
       payerAccount,
       tokenAccount,
-    ]);
+    ];
+
+    const txSign = await executeTransaction(connection, transaction, signers);
     console.info(`Created Token Account ${tokenAccount.publicKey.toBase58()}`, '---', txSign, '\n');
     return tokenAccount;
   }
@@ -129,10 +166,13 @@ export class TokenProgramService {
     );
     transaction.add(initializeTokenMintInstruction);
 
-    const txSign = await executeTransaction(connection, transaction, [
+    const signers = [
       payerAccount,
       tokenMintAccount,
-    ]);
+    ];
+
+    const txSign = await executeTransaction(connection, transaction, signers);
+
     console.info(`Created Token Mint ${tokenMintAccount.publicKey.toBase58()}`, '---', txSign, '\n');
     return tokenMintAccount;
   }
@@ -159,6 +199,14 @@ export class TokenProgramService {
       programId: TOKEN_PROGRAM_ID,
     });
     transaction.add(createAccountInstruction);
+
+    const initializeTokenMintInstruction = TokenProgramInstructionService.initializeMint(
+      tokenMintAccount.publicKey,
+      0,
+      payerAccount.publicKey,
+      null,
+    )
+    transaction.add(initializeTokenMintInstruction);
 
     const initialOwnerTokenAddress = this.findAssociatedTokenAddress(
       initialOwnerAddress,
@@ -187,10 +235,12 @@ export class TokenProgramService {
     );
     transaction.add(disableMintAuthorityInstruction);
 
-    const txSign = await executeTransaction(connection, transaction, [
+    const signers = [
       payerAccount,
       tokenMintAccount,
-    ]);
+    ];
+
+    const txSign = await executeTransaction(connection, transaction, signers);
     console.info(`Created Token Mint ${tokenMintAccount.publicKey.toBase58()}`, '---', txSign, '\n');
     return tokenMintAccount;
   }
@@ -211,9 +261,11 @@ export class TokenProgramService {
     );
     transaction.add(createATAInstruction);
 
-    const txSign = await executeTransaction(connection, transaction, [
+    const signers = [
       payerAccount,
-    ]);
+    ];
+
+    const txSign = await executeTransaction(connection, transaction, signers);
 
     const tokenAccountAddress = this.findAssociatedTokenAddress(
       ownerAddress,
@@ -375,6 +427,7 @@ export class TokenProgramService {
   static async mint(
     connection: Connection,
     payerAccount: Keypair,
+    authorityAccount: Keypair,
     tokenMintAddress: PublicKey,
     recipientAddress: PublicKey,
     amount: BN,
@@ -392,16 +445,20 @@ export class TokenProgramService {
     }
 
     const mintInstruction = TokenProgramInstructionService.mint(
-      payerAccount.publicKey,
+      authorityAccount.publicKey,
       tokenMintAddress,
       recipientTokenAddress,
       amount,
     );
     transaction.add(mintInstruction);
 
-    const txSign = await executeTransaction(connection, transaction, [
-      payerAccount
+    const signers = distinctSigners([
+      payerAccount,
+      authorityAccount,
     ]);
+    transaction.feePayer = payerAccount.publicKey;
+
+    const txSign = await executeTransaction(connection, transaction, signers);
     console.log(`Minted ${amount} token units to ${recipientTokenAddress.toBase58()}`, '---', txSign, '\n');
     return true;
   }
@@ -409,7 +466,8 @@ export class TokenProgramService {
   static async transfer(
     connection: Connection,
     payerAccount: Keypair,
-    payerTokenAddress: PublicKey,
+    ownerAccount: Keypair,
+    userTokenAddress: PublicKey,
     recipientAddress: PublicKey,
     amount: BN,
   ): Promise<boolean> {
@@ -417,7 +475,7 @@ export class TokenProgramService {
 
     const payerTokenAccountInfo = await this.getTokenAccountInfo(
       connection,
-      payerTokenAddress,
+      userTokenAddress,
     );
     let [recipientTokenAddress, createATAInstruction] = await this.findRecipientTokenAddress(
       connection,
@@ -430,17 +488,22 @@ export class TokenProgramService {
     }
 
     const transferTokenInstruction = TokenProgramInstructionService.transfer(
-      payerAccount.publicKey,
-      payerTokenAddress,
+      ownerAccount.publicKey,
+      userTokenAddress,
       recipientTokenAddress,
       amount,
     );
     transaction.add(transferTokenInstruction);
 
-    const txSign = await executeTransaction(connection, transaction, [
-      payerAccount
+    const signers = distinctSigners([
+      payerAccount,
+      ownerAccount,
     ]);
-    console.log(`Transferred ${amount} token units from ${payerTokenAddress.toBase58()} to ${recipientTokenAddress.toBase58()}`, '---', txSign, '\n');
+    transaction.feePayer = payerAccount.publicKey;
+
+    const txSign = await executeTransaction(connection, transaction, signers);
+    console.log(`Transferred ${amount} token units from ${userTokenAddress.toBase58()} to ${recipientTokenAddress.toBase58()}`, '---', txSign, '\n');
+
     return true;
   }
 
@@ -470,6 +533,7 @@ export class TokenProgramService {
 
   static async thawAccount(
     connection: Connection,
+    payerAccount: Keypair,
     authorityAccount: Keypair,
     accountAddress: PublicKey,
     mintAddress: PublicKey,
@@ -483,10 +547,15 @@ export class TokenProgramService {
     );
 
     transaction.add(thawAccountInstruction);
+    transaction.feePayer = payerAccount.publicKey;
 
-    const txSign = await executeTransaction(connection, transaction, [
+    const signers = distinctSigners([
+      payerAccount,
       authorityAccount
     ]);
+    transaction.feePayer = payerAccount.publicKey;
+
+    const txSign = await executeTransaction(connection, transaction, signers);
     console.log(`Thaw account ${accountAddress.toString()}`, '---', txSign, '\n');
 
     return true;

@@ -1,36 +1,45 @@
-use crate::framework::{
+use solana_program_test::{
+  ProgramTestContext,
+};
+use solana_sdk::{
+  account::{
+    ReadableAccount,
+  },
+  instruction::{
+    Instruction,
+  },
+  pubkey::{
+    Pubkey,
+  },
+  program_pack::{
+    Pack,
+  },
+  signature::{
+    Keypair,
+    Signer,
+  },
+  system_instruction,
+};
+use super::{
   context::{
     process_transaction,
   },
   system::{
     get_account_type,
   },
-};
-use solana_program_test::{
-  ProgramTestContext,
-};
-use solana_sdk::{
-  instruction::{
-    Instruction,
+  spl_atoken::{
+    create_associated_token_account_instruction,
   },
-  program_pack::{
-    Pack,
-  },
-  pubkey::{
-    Pubkey,
-  },
-  signature::{
-    Keypair,
-    Signer,
-  },
-  system_instruction, account::ReadableAccount,
-};
-use spl_token::{
-  state::{
-    Account as TokenAccount,
-    Mint as TokenMint,
+  spl_token::{
+    initialize_mint_instruction,
+    mint_token_instruction,
+    ID as TOKEN_PROGRAM_ID,
+    transfer_token_instruction,
+    TokenAccount,
+    TOKEN_MINT_LENGTH,
   },
 };
+pub use super::spl_atoken::get_associated_token_account_address;
 
 pub async fn create_token_mint(
   context: &mut ProgramTestContext,
@@ -48,17 +57,16 @@ pub async fn create_token_mint(
   let create_account_ix = system_instruction::create_account(
     &payer.pubkey(),
     &token_mint.pubkey(),
-    rent.minimum_balance(TokenMint::LEN),
-    TokenMint::LEN as u64,
-    &spl_token::id(),
+    rent.minimum_balance(TOKEN_MINT_LENGTH),
+    TOKEN_MINT_LENGTH as u64,
+    &TOKEN_PROGRAM_ID,
   );
-  let initialize_mint_ix = spl_token::instruction::initialize_mint(
-    &spl_token::id(),
+  let initialize_mint_ix = initialize_mint_instruction(
     &token_mint.pubkey(),
+    decimals,
     &authority,
     freeze_authority,
-    decimals,
-  ).unwrap();
+  );
 
   process_transaction(
     context,
@@ -76,7 +84,7 @@ pub async fn create_associated_token_account(
   let payer = Keypair::from_bytes(&context.payer.to_bytes())
     .unwrap();
 
-  let create_ata_ix = spl_associated_token_account::create_associated_token_account(
+  let create_ata_ix = create_associated_token_account_instruction(
     &payer.pubkey(),
     &owner,
     token_mint,
@@ -89,19 +97,9 @@ pub async fn create_associated_token_account(
     &[&payer]
   ).await;
 
-  get_associated_token_address(
+  get_associated_token_account_address(
     owner,
     token_mint,
-  )
-}
-
-pub fn get_associated_token_address(
-  owner: &Pubkey,
-  token_mint: &Pubkey,
-) -> Pubkey {
-  spl_associated_token_account::get_associated_token_address(
-    &owner,
-    &token_mint,
   )
 }
 
@@ -156,14 +154,12 @@ pub async fn mint_token(
     instructions.push(create_ata_ix_option.unwrap());
   }
   instructions.push(
-    spl_token::instruction::mint_to(
-      &spl_token::id(),
+    mint_token_instruction(
+      &authority.pubkey(),
       &token_mint,
       &recipient_address,
-      &authority.pubkey(),
-      &[],
-      amount
-    ).unwrap()
+      amount,
+    )
   );
   process_transaction(
       context,
@@ -194,15 +190,12 @@ pub async fn transfer_token(
   if create_ata_ix_option.is_some() {
     instructions.push(create_ata_ix_option.unwrap());
   }
-  instructions.push(spl_token::instruction::transfer(
-      &spl_token::id(),
-      &sender_token,
-      &recipient_address,
-      &sender.pubkey(),
-      &[],
-      amount,
-    ).unwrap()
-  );
+  instructions.push(transfer_token_instruction(
+    &sender.pubkey(),
+    &sender_token,
+    &recipient_address,
+    amount,
+  ));
 
   process_transaction(
       context,
@@ -222,11 +215,11 @@ async fn check_and_create_ata_ix(
     .await;
   let mut recipient_address = *recipient;
   if account_type == 0u8 || account_type == 1u8 {
-    recipient_address = get_associated_token_address(
+    recipient_address = get_associated_token_account_address(
       recipient,
       token_mint,
     );
-    let create_ata_ix = spl_associated_token_account::create_associated_token_account(
+    let create_ata_ix = create_associated_token_account_instruction(
       &payer.pubkey(),
       &recipient,
       &token_mint,

@@ -6,8 +6,10 @@
   "license": "Apache-2.0",
   "scripts": {
     "build:ts": "tsc --build",
-    "build:rs": "anchor build -- --sbf-out-dir ./tests/fixtures",
-    "deploy:program": "solana program deploy ./programs/test_framework/tests/fixtures/test_framework.so --program-id ./tests/tfx_test_framework.keypair.json --url localhost",
+    "build:rs": "anchor build -- --bpf-out-dir ./tests/fixtures",
+    "clean": "git clean -fxd",
+    "deploy:rs": "solana program deploy ./programs/test_framework/tests/fixtures/test_framework.so --program-id ./tests/tfx_test_framework.keypair.json --url localhost",
+    "retest:rs": "npm run build:rs && npm run test:rs",
     "test:rs": "cargo test-bpf -- --nocapture",
     "test:ts": "ts-mocha -p ./tsconfig.json ./tests/*.spec.ts --timeout 60000"
   },

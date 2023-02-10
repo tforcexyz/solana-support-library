@@ -14,11 +14,13 @@ use solana_sdk::{
     ID as SYSTEM_PROGRAM_ID,
   },
 };
-use spl_token::{
-  ID as TOKEN_PROGRAM_ID,
-};
-use crate::framework::context::{
-  process_transaction,
+use super::{
+  context::{
+    process_transaction,
+  },
+  spl_token::{
+    ID as TOKEN_PROGRAM_ID,
+  },
 };
 
 pub async fn airdrop_lamport(

@@ -1,4 +1,5 @@
 use solana_program_test::{
+  BanksClientError,
   ProgramTest,
   ProgramTestContext,
 };
@@ -21,13 +22,10 @@ use solana_sdk::{
     Transaction,
     TransactionError,
   },
-  transport::{
-    TransportError,
-  },
 };
 
 pub fn assert_transaction_result(
-  result: Result<(), TransportError>,
+  result: Result<(), BanksClientError>,
   is_success: bool,
   expected_error_message: &str,
 ) {
@@ -40,7 +38,7 @@ pub fn assert_transaction_result(
 }
 
 pub fn assert_instruction_error(
-  result: Result<(), TransportError>,
+  result: Result<(), BanksClientError>,
   instruction_index: u8,
   error_code: u32,
 ) {
@@ -118,7 +116,7 @@ pub async fn process_transaction2(
   payer: &Keypair,
   instructions: &[Instruction],
   signers: &[&Keypair],
-) -> Result<(), TransportError> {
+) -> Result<(), BanksClientError> {
   let tx = Transaction::new_signed_with_payer(
     &instructions.to_vec(),
     Some(&payer.pubkey()),

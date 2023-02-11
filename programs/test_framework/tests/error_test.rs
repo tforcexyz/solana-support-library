@@ -1,5 +1,5 @@
-pub mod client;
 pub mod framework;
+pub mod program;
 
 use solana_sdk::{
   signer::{
@@ -12,24 +12,22 @@ use crate::framework::{
   },
   context::{
     assert_instruction_error,
-    create_context,
     process_transaction2,
   },
   system::{
     airdrop_lamport,
   },
 };
-use test_framework::{
-  ID as PROGRAM_ID,
+use crate::program::{
+  client,
+  test_context::{
+    create_test_context,
+  },
 };
 
 #[tokio::test]
 async fn announce_test() {
-  let mut context = create_context(
-    &[
-      ("test_framework", PROGRAM_ID),
-    ],
-  ).await;
+  let mut context = create_test_context().await;
 
   let default_account = get_account(0);
   airdrop_lamport(&mut context, &default_account.pubkey(), 10_000_000).await;

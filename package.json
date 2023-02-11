@@ -6,9 +6,9 @@
   "license": "Apache-2.0",
   "scripts": {
     "build:ts": "tsc --build",
-    "build:rs": "anchor build -- --bpf-out-dir ./tests/fixtures",
+    "build:rs": "anchor build",
     "clean": "git clean -fxd",
-    "deploy:rs": "solana program deploy ./programs/test_framework/tests/fixtures/test_framework.so --program-id ./tests/tfx_test_framework.keypair.json --url localhost",
+    "deploy:rs": "solana program deploy ./target/deploy/test_framework.so --program-id ./tests/tfx_test_framework.keypair.json --url localhost",
     "retest:rs": "npm run build:rs && npm run test:rs",
     "test:rs": "cargo test-bpf -- --nocapture",
     "test:ts": "ts-mocha -p ./tsconfig.json ./tests/*.spec.ts --timeout 60000"

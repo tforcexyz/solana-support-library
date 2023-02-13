@@ -16,6 +16,7 @@ use solana_sdk::{
 };
 use super::{
   context::{
+    get_payer,
     process_transaction,
   },
   spl_token::{
@@ -33,16 +34,13 @@ pub async fn airdrop_lamport(
     recipient,
     amount,
   );
-  let payer = Keypair::from_bytes(&context.payer.to_bytes())
-    .unwrap();
-
+  let payer = get_payer(&context);
   process_transaction(
-      context,
-      &payer,
-      &[instruction],
-      &[&payer],
-    )
-    .await;
+    context,
+    &payer,
+    &[instruction],
+    &[&payer],
+  ).await;
 }
 
 pub async fn get_account_type(
@@ -86,13 +84,11 @@ pub async fn transfer_lamport(
     recipient,
     amount,
   );
-  let payer = Keypair::from_bytes(&context.payer.to_bytes())
-    .unwrap();
+  let payer = get_payer(&context);
   process_transaction(
-      context,
-      &payer,
-      &[instruction],
-      &[&payer, &sender],
-    )
-    .await;
+    context,
+    &payer,
+    &[instruction],
+    &[&payer, &sender],
+  ).await;
 }

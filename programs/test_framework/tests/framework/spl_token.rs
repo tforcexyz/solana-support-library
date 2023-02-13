@@ -13,7 +13,6 @@ use num_enum::{
   TryFromPrimitive,
 };
 use solana_sdk::{
-  declare_id,
   instruction::{
     AccountMeta,
     Instruction,
@@ -255,9 +254,8 @@ pub enum TokenInstruction {
     mint_authority: Pubkey,
     freeze_authority: COption<Pubkey>,
   },
-  InitializeAccount,
-  InitializeMultisig {
-    m: u8,
+  InitializeAccount3 {
+    owner: Pubkey,
   },
   Transfer {
     amount: u64,
@@ -295,10 +293,9 @@ impl TokenInstruction {
         buf.extend_from_slice(mint_authority.as_ref());
         pack_pubkey_option(freeze_authority, &mut buf);
       }
-      Self::InitializeAccount => buf.push(1),
-      &Self::InitializeMultisig { m } => {
-          buf.push(2);
-          buf.push(m);
+      &Self::InitializeAccount3 { owner } => {
+        buf.push(18);
+        buf.extend_from_slice(owner.as_ref());
       }
       &Self::Transfer { amount } => {
           buf.push(3);
@@ -331,10 +328,147 @@ impl TokenInstruction {
     };
     buf
   }
-
 }
 
-pub fn initialize_mint_instruction(
+pub fn approve_token_instruction(
+  owner_address: &Pubkey,
+  source_address: &Pubkey,
+  delegate_address: &Pubkey,
+  amount: u64,
+) -> Instruction {
+
+  let data = TokenInstruction::Approve {
+    amount,
+  }.pack();
+
+  let accounts = vec![
+    AccountMeta::new(*source_address, false),
+    AccountMeta::new(*delegate_address, false),
+    AccountMeta::new_readonly(*owner_address, true),
+  ];
+
+  Instruction {
+    accounts,
+    data,
+    program_id: ID,
+  }
+}
+
+pub fn burn_token_instruction(
+  owner_address: &Pubkey,
+  source_address: &Pubkey,
+  mint_address: &Pubkey,
+  amount: u64,
+) -> Instruction {
+
+  let data = TokenInstruction::Burn {
+    amount,
+  }.pack();
+
+  let accounts = vec![
+    AccountMeta::new(*source_address, false),
+    AccountMeta::new_readonly(*mint_address, false),
+    AccountMeta::new_readonly(*owner_address, true),
+  ];
+
+  Instruction {
+    accounts,
+    data,
+    program_id: ID,
+  }
+}
+
+pub fn close_token_account_instruction(
+  owner_address: &Pubkey,
+  source_address: &Pubkey,
+) -> Instruction {
+
+  let data = TokenInstruction::CloseAccount.pack();
+
+  let accounts = vec![
+    AccountMeta::new(*source_address, false),
+    AccountMeta::new(*owner_address, false),
+    AccountMeta::new_readonly(*owner_address, true),
+  ];
+
+  Instruction {
+    accounts,
+    data,
+    program_id: ID,
+  }
+}
+
+pub fn change_mint_authority_instruction(
+  authority_address: &Pubkey,
+  mint_address: &Pubkey,
+  authority_type: AuthorityType,
+  new_authority_address: Option<&Pubkey>,
+) -> Instruction {
+
+  let data = TokenInstruction::SetAuthority {
+    authority_type,
+    new_authority: match new_authority_address {
+      Some(ref pubkey) => COption::Some(**pubkey),
+      None => COption::None,
+    },
+  }.pack();
+
+  let accounts = vec![
+    AccountMeta::new(*mint_address, false),
+    AccountMeta::new_readonly(*authority_address, true),
+  ];
+
+  Instruction {
+    accounts,
+    data,
+    program_id: ID,
+  }
+}
+
+pub fn freeze_token_account_instruction(
+  authority_address: &Pubkey,
+  mint_address: &Pubkey,
+  token_account_address: &Pubkey,
+) -> Instruction {
+
+  let data = TokenInstruction::FreezeAccount.pack();
+
+  let accounts = vec![
+    AccountMeta::new(*token_account_address, false),
+    AccountMeta::new_readonly(*mint_address, false),
+    AccountMeta::new_readonly(*authority_address, true),
+  ];
+
+  Instruction {
+    accounts,
+    data,
+    program_id: ID,
+  }
+}
+
+pub fn initialize_token_account_instruction(
+  owner_address: &Pubkey,
+  token_account_address: &Pubkey,
+  mint_address: &Pubkey,
+) -> Instruction {
+
+  let data = TokenInstruction::InitializeAccount3 {
+    owner: *owner_address,
+  }.pack();
+
+  let accounts = vec![
+    AccountMeta::new(*token_account_address, false),
+    AccountMeta::new_readonly(*mint_address, false),
+  ];
+
+  Instruction {
+    accounts,
+    data,
+    program_id: ID,
+  }
+}
+
+pub fn initialize_token_mint_instruction(
   mint_address: &Pubkey,
   decimals: u8,
   mint_authority_address: &Pubkey,
@@ -370,12 +504,52 @@ pub fn mint_token_instruction(
 ) -> Instruction {
 
   let data = TokenInstruction::MintTo {
-    amount
+    amount,
   }.pack();
 
   let accounts = vec![
     AccountMeta::new(*mint_address, false),
     AccountMeta::new(*destination_address, false),
+    AccountMeta::new_readonly(*authority_address, true),
+  ];
+
+  Instruction {
+    accounts,
+    data,
+    program_id: ID,
+  }
+}
+
+pub fn revoke_token_instruction(
+  owner_address: &Pubkey,
+  source_address: &Pubkey,
+) -> Instruction {
+
+  let data = TokenInstruction::Revoke.pack();
+
+  let accounts = vec![
+    AccountMeta::new(*source_address, false),
+    AccountMeta::new_readonly(*owner_address, true),
+  ];
+
+  Instruction {
+    accounts,
+    data,
+    program_id: ID,
+  }
+}
+
+pub fn thaw_token_account_instruction(
+  authority_address: &Pubkey,
+  mint_address: &Pubkey,
+  token_account_address: &Pubkey,
+) -> Instruction {
+
+  let data = TokenInstruction::ThawAccount.pack();
+
+  let accounts = vec![
+    AccountMeta::new(*token_account_address, false),
+    AccountMeta::new_readonly(*mint_address, false),
     AccountMeta::new_readonly(*authority_address, true),
   ];
 
@@ -394,7 +568,7 @@ pub fn transfer_token_instruction(
 ) -> Instruction {
 
   let data = TokenInstruction::Transfer {
-    amount
+    amount,
   }.pack();
 
   let accounts = vec![
